@@ -1,4 +1,4 @@
-# Den
+ko# Den
 package yourpackage
 
 import (
@@ -136,5 +136,65 @@ func TestPostHandler(t *testing.T) {
     router.ServeHTTP(w3, req3)
     assert.Equal(t, http.StatusInternalServerError, w3.Code)
     assert.Contains(t, w3.Body.String(), "Database error")
+}
+
+
+----------------------------
+func TestPostHandler(t *testing.T) {
+    // Set up your router, mock database, etc.
+
+    // Test case 1: Successful insertion
+    validBody := `{"user_id": 1, "message": "Hello, server!"}`
+    req1, _ := http.NewRequest("POST", "/post", bytes.NewBuffer([]byte(validBody)))
+    req1.Header.Set("Content-Type", "application/json")
+    w1 := httptest.NewRecorder()
+    router.ServeHTTP(w1, req1)
+    assert.Equal(t, http.StatusOK, w1.Code)
+    assert.Contains(t, w1.Body.String(), "Record inserted")
+
+    // Test case 2: Invalid JSON
+    req2, _ := http.NewRequest("POST", "/post", bytes.NewBuffer([]byte("invalid json")))
+    req2.Header.Set("Content-Type", "application/json")
+    w2 := httptest.NewRecorder()
+    router.ServeHTTP(w2, req2)
+    assert.Equal(t, http.StatusBadRequest, w2.Code)
+    assert.Contains(t, w2.Body.String(), "Invalid JSON")
+
+    // Test case 3: Database error (invalid user_id)
+    invalidUserIDBody := `{"user_id": 999, "message": "Hello, server!"}`
+    req3, _ := http.NewRequest("POST", "/post", bytes.NewBuffer([]byte(invalidUserIDBody)))
+    req3.Header.Set("Content-Type", "application/json")
+    w3 := httptest.NewRecorder()
+    router.ServeHTTP(w3, req3)
+    assert.Equal(t, http.StatusInternalServerError, w3.Code)
+    assert.Contains(t, w3.Body.String(), "Database error")
+
+    // Test case 4: Missing user_id field
+    missingUserIDBody := `{"message": "Hello, server!"}`
+    req4, _ := http.NewRequest("POST", "/post", bytes.NewBuffer([]byte(missingUserIDBody)))
+    req4.Header.Set("Content-Type", "application/json")
+    w4 := httptest.NewRecorder()
+    router.ServeHTTP(w4, req4)
+    assert.Equal(t, http.StatusBadRequest, w4.Code)
+    assert.Contains(t, w4.Body.String(), "Invalid JSON")
+
+    // Test case 5: Missing message field
+    missingMessageBody := `{"user_id": 1}`
+    req5, _ := http.NewRequest("POST", "/post", bytes.NewBuffer([]byte(missingMessageBody)))
+    req5.Header.Set("Content-Type", "application/json")
+    w5 := httptest.NewRecorder()
+    router.ServeHTTP(w5, req5)
+    assert.Equal(t, http.StatusBadRequest, w5.Code)
+    assert.Contains(t, w5.Body.String(), "Invalid JSON")
+
+    // Test case 6: Exceed maximum message length
+    longMessageBody := `{"user_id": 1, "message": "Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed do eiusmod tempor incididunt ut labore et dolore magna aliqua."}`
+    req6, _ := http.NewRequest("POST", "/post", bytes.NewBuffer([]byte(longMessageBody)))
+    req6.Header.Set("Content-Type", "application/json")
+    w6 := httptest.NewRecorder()
+    router.ServeHTTP(w6, req6)
+    assert.Equal(t, http.StatusOK, w6.Code)
+    assert.Contains(t, w6.Body.String(), "Record inserted")
+
 }
 
