@@ -198,3 +198,79 @@ func TestPostHandler(t *testing.T) {
 
 }
 
+
+-------+--+--
+func TestGetUserHandler(t *testing.T) {
+	// Initialize a new Gin router
+	router := gin.Default()
+
+	// Create a new SQL mock
+	mockDB, mock, _ := sqlmock.New()
+	defer mockDB.Close()
+
+	// Initialize the GORM database
+	dialector := postgres.New(postgres.Config{
+		Conn:       mockDB,
+		DriverName: "postgres",
+	})
+	db, _ := gorm.Open(dialector, &gorm.Config{})
+
+	// Create an instance of MockApp
+	app := &MockApp{
+		MyApp: &MyApp{
+			DB: db, // Use a mock database or set it as needed
+		},
+	}
+
+	// Set up the router with the getUser handler
+	router.GET("/get_user", app.getUser)
+
+	t.Run("User exists", func(t *testing.T) {
+		// Define a user ID for the test
+		userID := "1"
+
+		// Mock database query to return user data
+		rows := sqlmock.NewRows([]string{"ID", "Username", "Email"}).
+			AddRow(1, "john_doe", "john@example.com")
+		mock.ExpectQuery(`SELECT`).WithArgs(userID).WillReturnRows(rows)
+
+		// Create a request to the endpoint
+		req, err := http.NewRequest("GET", "/get_user?userID="+userID, nil)
+		require.NoError(t, err)
+
+		// Create a response recorder to capture the response
+		w := httptest.NewRecorder()
+
+		// Serve the request to the router
+		router.ServeHTTP(w, req)
+
+		// Check the response status code and body
+		assert.Equal(t, http.StatusOK, w.Code)
+		assert.JSONEq(t, `{"ID":1,"Username":"john_doe","Email":"john@example.com"}`, w.Body.String())
+	})
+
+	t.Run("User does not exist", func(t *testing.T) {
+		// Define a user ID for a non-existent user
+		userID := "999"
+
+		// Mock database query to return no rows (user not found)
+		mock.ExpectQuery(`SELECT`).WithArgs(userID).WillReturnRows(sqlmock.NewRows(nil))
+
+		// Create a request to the endpoint
+		req, err := http.NewRequest("GET", "/get_user?userID="+userID, nil)
+		require.NoError(t, err)
+
+		// Create a response recorder to capture the response
+		w := httptest.NewRecorder()
+
+		// Serve the request to the router
+		router.ServeHTTP(w, req)
+
+		// Check the response status code and body
+		assert.Equal(t, http.StatusNotFound, w.Code)
+		assert.JSONEq(t, `{"message":"User not found"}`, w.Body.String())
+	})
+
+	// ... (add more test cases as needed)
+}
+
