@@ -274,3 +274,31 @@ func TestGetUserHandler(t *testing.T) {
 	// ... (add more test cases as needed)
 }
 
+
+//----------------------------------------------------------------------------------
+	
+package main
+
+import "fmt"
+
+func main() {
+	n := 7
+
+	for i := 0; i < n; i++ {
+		for j := 0; j < n*2; j++ {
+
+			if i != n-1 {
+				if j == ((n*2)/2)+i || j == ((n*2)/2)-i {
+					fmt.Print("*")
+				} else {
+					fmt.Print(" ")
+				}
+			} else {
+				if j < n {
+					fmt.Print(" *")
+				}
+			}
+		}
+		fmt.Println()
+	}
+}
