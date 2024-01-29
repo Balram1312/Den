@@ -1,0 +1,28 @@
+package main
+
+import (
+	"log"
+	"os"
+	"os/exec"
+)
+
+func main() {
+	htmlFilePath := "your_input.html"
+	pdfFilePath := "your_output.pdf"
+	pageWidth := "8.5in"  // Set your custom page width
+	pageHeight := "11in" // Set your custom page height
+
+	cmd := exec.Command("wkhtmltopdf", "--page-width", pageWidth, "--page-height", pageHeight, htmlFilePath, pdfFilePath)
+
+	err := cmd.Run()
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	// Open the generated PDF file using the default viewer
+	openCmd := exec.Command("xdg-open", pdfFilePath) // Adjust for your system's default PDF viewer command
+	err = openCmd.Run()
+	if err != nil {
+		log.Fatal(err)
+	}
+}
